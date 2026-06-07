@@ -186,12 +186,12 @@ export default function SettingsPage() {
   const [versionKey, setVersionKey] = useState<string | null>(null);
   const [showImport, setShowImport] = useState(false);
   const [saved, setSaved] = useState(false);
-  const unsubRef = useRef<() => void>();
+  const unsubRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     load();
     unsubRef.current = subscribeRealtime();
-    return () => unsubRef.current?.();
+    return () => { unsubRef.current?.(); };
   }, []);
 
   async function handleSave() {
