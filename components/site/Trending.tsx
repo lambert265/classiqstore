@@ -1,14 +1,15 @@
 import Image from "next/image";
+import Link from "next/link";
 
 const items = [
-  { rank: 1, name: "Silk Wrap Dress",           meta: "women clothing",    img: "/product-1.jpg" },
-  { rank: 2, name: "Strappy Heeled Mules",       meta: "women footwear",    img: "/product-2.jpg" },
-  { rank: 3, name: "Wide Leg Linen Trousers",    meta: "women clothing",    img: "/product-3.jpg" },
-  { rank: 4, name: "Cream Leather Sneakers",     meta: "women footwear",    img: "/product-4.jpg" },
-  { rank: 5, name: "Knit Cardigan",              meta: "women knitwear",    img: "/product-5.jpg" },
-  { rank: 6, name: "Ankle Strap Heels",          meta: "women footwear",    img: "/product-1.jpg" },
-  { rank: 7, name: "Tailored Blazer",            meta: "women clothing",    img: "/product-2.jpg" },
-  { rank: 8, name: "Gold Hoop Earrings",         meta: "women accessories", img: "/product-3.jpg" },
+  { id: 1, rank: 1, name: "Silk Wrap Dress",        meta: "women clothing",    img: "/product-1.jpg", price: "₦61,500" },
+  { id: 4, rank: 2, name: "Strappy Heeled Mules",    meta: "women footwear",    img: "/product-2.jpg", price: "₦51,500" },
+  { id: 3, rank: 3, name: "Wide Leg Linen Trousers", meta: "women clothing",    img: "/product-3.jpg", price: "₦39,500" },
+  { id: 2, rank: 4, name: "Cream Leather Sneakers",  meta: "women footwear",    img: "/product-4.jpg", price: "₦54,000" },
+  { id: 5, rank: 5, name: "Knit Cardigan",           meta: "women knitwear",    img: "/product-5.jpg", price: "₦47,500" },
+  { id: 8, rank: 6, name: "Ankle Strap Heels",       meta: "women footwear",    img: "/product-1.jpg", price: "₦58,500" },
+  { id: 7, rank: 7, name: "Tailored Blazer",         meta: "women clothing",    img: "/product-2.jpg", price: "₦78,000" },
+  { id: 6, rank: 8, name: "Gold Hoop Earrings",      meta: "women accessories", img: "/product-3.jpg", price: "₦18,000" },
 ];
 
 export default function Trending() {
@@ -32,7 +33,7 @@ export default function Trending() {
         {/* Card grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {items.map((item) => (
-            <a key={item.name} href="/" className="bg-white border border-blue-100 rounded-2xl overflow-hidden flex flex-col group">
+            <Link key={item.id} href={`/products/${item.id}`} className="bg-white border border-blue-100 rounded-2xl overflow-hidden flex flex-col group">
 
               {/* Image */}
               <div className="relative aspect-[3/4] overflow-hidden bg-muted">
@@ -61,8 +62,9 @@ export default function Trending() {
               <div className="p-4 flex flex-col gap-1">
                 <p className="text-[9px] uppercase tracking-[0.14em] text-muted-foreground">{item.meta}</p>
                 <p className="text-sm text-foreground group-hover:text-primary transition-colors duration-200 leading-snug">{item.name}</p>
+                <p className="font-display text-sm text-primary mt-0.5">{item.price}</p>
               </div>
-            </a>
+            </Link>
           ))}
         </div>
       </div>

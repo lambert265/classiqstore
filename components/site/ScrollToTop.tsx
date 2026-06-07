@@ -16,11 +16,13 @@ export default function ScrollToTop() {
     <button
       onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
       aria-label="Scroll to top"
-      className={`fixed bottom-8 right-8 z-50 w-11 h-11 flex items-center justify-center bg-primary text-primary-foreground border border-primary hover:bg-accent transition-all duration-300 ${
-        visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"
-      }`}
+      className={`fixed z-40 w-10 h-10 rounded-full flex items-center justify-center bg-primary text-white shadow-lg hover:bg-accent transition-all duration-300
+        bottom-28 right-4
+        lg:bottom-8 lg:right-8
+        ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"}
+      `}
     >
-      <ArrowUp size={16} strokeWidth={1.6} />
+      <ArrowUp size={16} strokeWidth={1.8} />
     </button>
   );
 }
