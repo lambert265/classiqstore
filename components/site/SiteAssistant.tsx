@@ -14,7 +14,9 @@ const SUGGESTIONS = [
   { icon: MapPin,      label: "Full outfit under ₦150k",        text: "Suggest a full outfit under ₦150,000" },
 ];
 
-function buildCartSummary(items: ReturnType<typeof useCart>["items"], total: () => number): string | null {
+import { CartItem } from "@/store/cart";
+
+function buildCartSummary(items: CartItem[], total: () => number): string | null {
   if (!items.length) return null;
   const lines = items.map(
     (i) => `${i.name} (Size ${i.size}, qty ${i.qty}) at ₦${(i.price * i.qty).toLocaleString("en-NG")}`
