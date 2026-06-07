@@ -34,7 +34,7 @@ export default function Header() {
   const [query,        setQuery]        = useState("");
   const profileRef = useRef<HTMLDivElement>(null);
   const { setOpen: openCart, count } = useCart();
-  const { setOpen: setNovaOpen } = useSiteAssistant();
+  const { setOpen: setNovaOpen, open: novaOpen } = useSiteAssistant();
   const cartCount = count();
 
   const isSignedIn = !!mockUser;
@@ -199,7 +199,7 @@ export default function Header() {
           </button>
 
           {/* Nova AI */}
-          <button onClick={() => setNovaOpen(v => !v)} className="relative flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-full text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10 transition-all duration-200">
+          <button onClick={() => setNovaOpen(!novaOpen)} className="relative flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-full text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10 transition-all duration-200">
             <Sparkles size={18} strokeWidth={1.4} />
             <span className="text-[8px] uppercase tracking-[0.12em]">Nova</span>
           </button>
