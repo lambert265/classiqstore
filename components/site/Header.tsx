@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Search, ShoppingBag, Menu, X, ChevronDown, ArrowRight, Store, User, Package, Heart, Settings, LogOut, Sparkles } from "lucide-react";
 import { useCart } from "@/store/cart";
 import { useSiteAssistant } from "@/store/siteAssistant";
+import { createClient } from "@/lib/supabase/client";
 
 const shopCategories = [
   { label: "New In",      sub: ["This Week", "Last Drop", "Back in Stock"] },
@@ -23,9 +24,8 @@ const browseCategories = [
   { label: "Blouses",     color: "bg-orange-100" },
 ];
 
-const mockUser = null as null | { name: string; email: string; initials: string };
-
 export default function Header() {
+  const [authUser, setAuthUser] = useState<{ name: string; email: string; initials: string } | null>(null);
   const [scrolled,     setScrolled]     = useState(false);
   const [shopOpen,     setShopOpen]     = useState(false);
   const [menuOpen,     setMenuOpen]     = useState(false);
@@ -37,7 +37,40 @@ export default function Header() {
   const { setOpen: setNovaOpen, open: novaOpen } = useSiteAssistant();
   const cartCount = count();
 
-  const isSignedIn = !!mockUser;
+  const isSignedIn = !!authUser;
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) {
+        const fullName: string = data.user.user_metadata?.full_name ?? data.user.email ?? "";
+        const parts = fullName.trim().split(" ");
+        const initials = parts.length >= 2
+          ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+          : fullName.slice(0, 2).toUpperCase();
+        setAuthUser({ name: fullName, email: data.user.email ?? "", initials });
+      }
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        const fullName: string = session.user.user_metadata?.full_name ?? session.user.email ?? "";
+        const parts = fullName.trim().split(" ");
+        const initials = parts.length >= 2
+          ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+          : fullName.slice(0, 2).toUpperCase();
+        setAuthUser({ name: fullName, email: session.user.email ?? "", initials });
+      } else {
+        setAuthUser(null);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  async function handleSignOut() {
+    await createClient().auth.signOut();
+    setAuthUser(null);
+    setProfileOpen(false);
+  }
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 60);
@@ -120,7 +153,7 @@ export default function Header() {
                   onClick={() => setProfileOpen((o) => !o)}
                   className="w-8 h-8 rounded-full bg-primary text-primary-foreground text-[11px] font-medium flex items-center justify-center hover:bg-accent transition-colors duration-200 ml-1"
                 >
-                  {mockUser.initials}
+                  {authUser!.initials}
                 </button>
               ) : (
                 <Link href="/auth" className={`p-2 rounded-full transition-colors duration-200 ${iconCls}`}>
@@ -135,11 +168,11 @@ export default function Header() {
                   {/* User info */}
                   <div className="px-5 py-4 border-b border-border flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground text-sm font-medium flex items-center justify-center shrink-0">
-                      {mockUser.initials}
+                      {authUser!.initials}
                     </div>
                     <div className="flex flex-col gap-0.5 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">{mockUser.name}</p>
-                      <p className="text-[10px] text-muted-foreground truncate">{mockUser.email}</p>
+                      <p className="text-sm font-medium text-foreground truncate">{authUser!.name}</p>
+                      <p className="text-[10px] text-muted-foreground truncate">{authUser!.email}</p>
                     </div>
                   </div>
                   {/* Links */}
@@ -154,7 +187,7 @@ export default function Header() {
                       {label}
                     </Link>
                   ))}
-                  <button className="w-full flex items-center gap-3 px-5 py-3 text-sm text-rose-500 hover:bg-rose-50 transition-colors">
+                  <button onClick={handleSignOut} className="w-full flex items-center gap-3 px-5 py-3 text-sm text-rose-500 hover:bg-rose-50 transition-colors">
                     <LogOut size={14} strokeWidth={1.5} />
                     Sign out
                   </button>
@@ -208,7 +241,7 @@ export default function Header() {
           {isSignedIn ? (
             <Link href="/profile" className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-full text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10 transition-all duration-200">
               <div className="w-[18px] h-[18px] rounded-full bg-white text-primary text-[9px] font-semibold flex items-center justify-center leading-none">
-                {mockUser.initials.charAt(0)}
+                {authUser!.initials.charAt(0)}
               </div>
               <span className="text-[8px] uppercase tracking-[0.12em]">Profile</span>
             </Link>
@@ -259,7 +292,7 @@ export default function Header() {
           {/* Bottom of drawer */}
           <div className="px-6 pb-10 pt-4 border-t border-border">
             {isSignedIn ? (
-              <button className="w-full py-3.5 rounded-full border border-rose-200 text-rose-500 text-[11px] uppercase tracking-[0.18em] hover:bg-rose-50 transition-colors duration-200 flex items-center justify-center gap-2">
+              <button onClick={handleSignOut} className="w-full py-3.5 rounded-full border border-rose-200 text-rose-500 text-[11px] uppercase tracking-[0.18em] hover:bg-rose-50 transition-colors duration-200 flex items-center justify-center gap-2">
                 <LogOut size={14} strokeWidth={1.5} />
                 Sign out
               </button>

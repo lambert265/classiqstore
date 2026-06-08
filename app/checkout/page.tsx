@@ -1,24 +1,17 @@
-export const dynamic = "force-dynamic";
-
 "use client";
+
+export const dynamic = "force-dynamic";
 
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowLeft, Lock, ChevronRight, CheckCircle,
-  CreditCard, Smartphone, Building2, Tag,
+  CreditCard, Smartphone, Building2, Tag, ShoppingBag,
 } from "lucide-react";
-
-/* ── mock auth — swap to true to test signed-in flow ── */
-const isSignedIn = false;
-
-/* ── mock cart items ── */
-const cartItems = [
-  { id: 1, name: "Silk Wrap Dress",        price: 61500,  qty: 1, size: "S",  img: "/product-1.jpg" },
-  { id: 2, name: "Cream Leather Sneakers", price: 54000,  qty: 1, size: "38", img: "/product-2.jpg" },
-  { id: 3, name: "Knit Cardigan",          price: 47500,  qty: 2, size: "M",  img: "/product-3.jpg" },
-];
+import { useCart } from "@/store/cart";
+import { createClient } from "@/lib/supabase/client";
+import { useEffect } from "react";
 
 const DELIVERY_FEE = 3500;
 const fmt = (n: number) => `₦${n.toLocaleString("en-NG")}`;
@@ -32,6 +25,8 @@ const paymentMethods = [
 type Step = "details" | "payment" | "confirm";
 
 export default function CheckoutPage() {
+  const { items, clear } = useCart();
+  const [isSignedIn, setIsSignedIn] = useState(false);
   const [step,          setStep]          = useState<Step>("details");
   const [payMethod,     setPayMethod]     = useState("card");
   const [promoCode,     setPromoCode]     = useState("");
@@ -39,11 +34,18 @@ export default function CheckoutPage() {
   const [processing,    setProcessing]    = useState(false);
   const [done,          setDone]          = useState(false);
 
+  useEffect(() => {
+    createClient().auth.getUser().then(({ data }) => {
+      setIsSignedIn(!!data.user);
+    });
+  }, []);
+
   const [form, setForm] = useState({
     firstName: "", lastName: "", email: "",
     phone: "", address: "", city: "", state: "", zip: "",
   });
 
+  const cartItems = items;
   const subtotal  = cartItems.reduce((s, i) => s + i.price * i.qty, 0);
   const discount  = promoApplied ? Math.round(subtotal * 0.1) : 0;
   const total     = subtotal - discount + DELIVERY_FEE;
@@ -53,8 +55,28 @@ export default function CheckoutPage() {
 
   const handlePay = () => {
     setProcessing(true);
-    setTimeout(() => { setProcessing(false); setDone(true); }, 2800);
+    setTimeout(() => { setProcessing(false); setDone(true); clear(); }, 2800);
   };
+
+  /* ── Empty cart gate ── */
+  if (items.length === 0 && !done) {
+    return (
+      <div className="min-h-screen bg-secondary flex items-center justify-center px-6 py-20">
+        <div className="glass rounded-3xl p-10 w-full max-w-md flex flex-col items-center text-center gap-7">
+          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+            <ShoppingBag size={24} strokeWidth={1.4} className="text-primary" />
+          </div>
+          <div className="flex flex-col gap-2">
+            <h1 className="font-display text-3xl text-foreground">Your bag is empty</h1>
+            <p className="text-sm text-muted-foreground">Add some pieces before checking out.</p>
+          </div>
+          <Link href="/" className="w-full py-4 rounded-full bg-primary text-primary-foreground text-[11px] uppercase tracking-[0.18em] text-center hover:bg-accent transition-colors duration-300">
+            Continue shopping
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   /* ── Auth gate ── */
   if (!isSignedIn) {

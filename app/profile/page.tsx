@@ -1,10 +1,11 @@
-export const dynamic = "force-dynamic";
-
 "use client";
 
-import { useState } from "react";
+export const dynamic = "force-dynamic";
+
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Package, Heart, Settings, MapPin, LogOut,
   ChevronRight, ArrowLeft, Check, Edit2,
@@ -12,35 +13,29 @@ import {
   Lock, Smartphone, Eye, EyeOff, Camera,
   Star, Gift, Ruler,
 } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 
-const user = {
-  name: "Amara Osei",
-  email: "amara@email.com",
-  phone: "+234 801 234 5678",
-  joined: "March 2025",
-  initials: "AO",
-  tier: "Gold Member",
-};
+type Order = { id: string; date: string; status: string; items: number; total: number; img: string };
+type WishlistItem = { id: number; name: string; price: string; img: string };
+type Address = { id: number; label: string; address: string; city: string; zip: string; isDefault: boolean };
 
-const orders = [
-  { id: "#NV-00412", date: "12 Jun 2026", status: "Delivered",   items: 2, total: 115500, img: "/product-1.jpg" },
-  { id: "#NV-00389", date: "28 May 2026", status: "In Transit",  items: 1, total: 61500,  img: "/product-2.jpg" },
-  { id: "#NV-00301", date: "3 Apr 2026",  status: "Delivered",   items: 3, total: 187000, img: "/product-3.jpg" },
+const fmt = (n: number) => `₦${n.toLocaleString("en-NG")}`;
+
+// Placeholder data — replace with real DB queries when orders/wishlist tables exist
+const placeholderOrders: Order[] = [
+  { id: "#NV-00412", date: "12 Jun 2026", status: "Delivered",  items: 2, total: 115500, img: "/product-1.jpg" },
+  { id: "#NV-00389", date: "28 May 2026", status: "In Transit", items: 1, total: 61500,  img: "/product-2.jpg" },
+  { id: "#NV-00301", date: "3 Apr 2026",  status: "Delivered",  items: 3, total: 187000, img: "/product-3.jpg" },
 ];
-
-const wishlist = [
-  { id: 1, name: "Silk Wrap Dress",   price: "₦61,500",  img: "/product-2.jpg" },
-  { id: 2, name: "Ankle Strap Heels", price: "₦58,500",  img: "/product-4.jpg" },
-  { id: 3, name: "Tailored Blazer",   price: "₦78,000",  img: "/product-1.jpg" },
+const placeholderWishlist: WishlistItem[] = [
+  { id: 1, name: "Silk Wrap Dress",   price: "₦61,500", img: "/product-2.jpg" },
+  { id: 2, name: "Ankle Strap Heels", price: "₦58,500", img: "/product-4.jpg" },
+  { id: 3, name: "Tailored Blazer",   price: "₦78,000", img: "/product-1.jpg" },
 ];
-
-const addresses = [
+const placeholderAddresses: Address[] = [
   { id: 1, label: "Home",   address: "14 Adeola Odeku Street", city: "Victoria Island, Lagos", zip: "101241", isDefault: true },
   { id: 2, label: "Office", address: "7 Sanusi Fafunwa Street", city: "Victoria Island, Lagos", zip: "101241", isDefault: false },
 ];
-
-const fmt = (n: number) => `₦${n.toLocaleString("en-NG")}`;
-const totalSpend = orders.reduce((s, o) => s + o.total, 0);
 
 const statusColor: Record<string, string> = {
   Delivered:    "bg-emerald-100 text-emerald-700",
@@ -67,30 +62,62 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
 }
 
 export default function ProfilePage() {
+  const router = useRouter();
+  const [authUser, setAuthUser] = useState<{ name: string; email: string; initials: string; joined: string } | null>(null);
+  const orders    = placeholderOrders;
+  const wishlist  = placeholderWishlist;
+  const addresses = placeholderAddresses;
+
   const [activeTab,    setActiveTab]    = useState("orders");
   const [settingsTab,  setSettingsTab]  = useState("account");
   const [showPassword, setShowPassword] = useState(false);
 
-  // notification prefs
-  const [notifOrders,  setNotifOrders]  = useState(true);
-  const [notifDrops,   setNotifDrops]   = useState(true);
+  const [notifOrders,    setNotifOrders]    = useState(true);
+  const [notifDrops,     setNotifDrops]     = useState(true);
   const [notifMarketing, setNotifMarketing] = useState(false);
-  const [notifSMS,     setNotifSMS]     = useState(false);
-  const [notifEmail,   setNotifEmail]   = useState(true);
+  const [notifSMS,       setNotifSMS]       = useState(false);
+  const [notifEmail,     setNotifEmail]     = useState(true);
 
-  // preferences
   const [sizePreference, setSizePreference] = useState("M");
   const [currency,       setCurrency]       = useState("NGN");
 
+  useEffect(() => {
+    createClient().auth.getUser().then(({ data }) => {
+      if (!data.user) { router.push("/auth"); return; }
+      const fullName: string = data.user.user_metadata?.full_name ?? data.user.email ?? "User";
+      const parts = fullName.trim().split(" ");
+      const initials = parts.length >= 2
+        ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+        : fullName.slice(0, 2).toUpperCase();
+      const joined = new Date(data.user.created_at).toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+      setAuthUser({ name: fullName, email: data.user.email ?? "", initials, joined });
+    });
+  }, [router]);
+
+  async function handleSignOut() {
+    await createClient().auth.signOut();
+    router.push("/");
+  }
+
+  const totalSpend = orders.reduce((s, o) => s + o.total, 0);
+
   const settingsTabs = [
-    { id: "account",       label: "Account",        icon: User     },
-    { id: "notifications", label: "Notifications",  icon: Bell     },
-    { id: "security",      label: "Security",       icon: Shield   },
-    { id: "payment",       label: "Payment",        icon: CreditCard },
-    { id: "preferences",   label: "Preferences",    icon: Star     },
+    { id: "account",       label: "Account",       icon: User      },
+    { id: "notifications", label: "Notifications", icon: Bell      },
+    { id: "security",      label: "Security",      icon: Shield    },
+    { id: "payment",       label: "Payment",       icon: CreditCard },
+    { id: "preferences",   label: "Preferences",   icon: Star      },
   ];
 
   const inputCls = "w-full bg-secondary border border-border text-foreground text-sm px-4 py-2.5 rounded-xl focus:outline-none focus:border-primary transition-all placeholder:text-muted-foreground";
+
+  if (!authUser) {
+    return (
+      <div className="min-h-screen bg-secondary flex items-center justify-center">
+        <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-secondary">
@@ -112,20 +139,20 @@ export default function ProfilePage() {
           <div className="flex items-center gap-5">
             <div className="relative shrink-0">
               <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-primary flex items-center justify-center text-white font-display text-2xl tracking-wide">
-                {user.initials}
+                {authUser.initials}
               </div>
               <button className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-primary border-2 border-white flex items-center justify-center">
                 <Camera size={12} className="text-white" />
               </button>
             </div>
             <div className="flex flex-col gap-1 flex-1 min-w-0">
-              <h1 className="font-display text-2xl md:text-3xl text-foreground leading-none">{user.name}</h1>
-              <p className="text-sm text-muted-foreground truncate">{user.email}</p>
+              <h1 className="font-display text-2xl md:text-3xl text-foreground leading-none">{authUser.name}</h1>
+              <p className="text-sm text-muted-foreground truncate">{authUser.email}</p>
               <div className="flex items-center gap-2 mt-1">
                 <span className="px-2.5 py-1 rounded-full bg-primary/10 text-primary text-[9px] uppercase tracking-[0.16em] font-medium flex items-center gap-1">
-                  <Gift size={9} /> {user.tier}
+                  <Gift size={9} /> Member
                 </span>
-                <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">Since {user.joined}</p>
+                <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">Since {authUser.joined}</p>
               </div>
             </div>
             <button className="w-9 h-9 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:border-primary hover:text-primary transition-colors shrink-0">
@@ -246,7 +273,6 @@ export default function ProfilePage() {
         {activeTab === "settings" && (
           <div className="flex flex-col gap-4">
 
-            {/* Settings sub-tabs */}
             <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1">
               {settingsTabs.map(({ id, label, icon: Icon }) => (
                 <button key={id} onClick={() => setSettingsTab(id)}
@@ -260,7 +286,6 @@ export default function ProfilePage() {
               ))}
             </div>
 
-            {/* Account */}
             {settingsTab === "account" && (
               <div className="flex flex-col gap-4">
                 <div className="bg-white border border-blue-100 rounded-2xl p-6 flex flex-col gap-4">
@@ -268,15 +293,15 @@ export default function ProfilePage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="flex flex-col gap-1.5">
                       <label className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">Full Name</label>
-                      <input type="text" defaultValue={user.name} className={inputCls} />
+                      <input type="text" defaultValue={authUser.name} className={inputCls} />
                     </div>
                     <div className="flex flex-col gap-1.5">
                       <label className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">Email</label>
-                      <input type="email" defaultValue={user.email} className={inputCls} />
+                      <input type="email" defaultValue={authUser.email} className={inputCls} />
                     </div>
                     <div className="flex flex-col gap-1.5">
                       <label className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">Phone</label>
-                      <input type="tel" defaultValue={user.phone} className={inputCls} />
+                      <input type="tel" className={inputCls} />
                     </div>
                     <div className="flex flex-col gap-1.5">
                       <label className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">Date of Birth</label>
@@ -290,15 +315,14 @@ export default function ProfilePage() {
               </div>
             )}
 
-            {/* Notifications */}
             {settingsTab === "notifications" && (
               <div className="bg-white border border-blue-100 rounded-2xl overflow-hidden">
                 {[
-                  { label: "Order updates",    sub: "Shipping and delivery status alerts",  value: notifOrders,    set: setNotifOrders },
-                  { label: "New arrivals",      sub: "Be first to know about new drops",     value: notifDrops,     set: setNotifDrops },
-                  { label: "Marketing emails",  sub: "Deals, offers, and style edits",       value: notifMarketing, set: setNotifMarketing },
-                  { label: "SMS notifications", sub: "Text alerts for orders and delivery",  value: notifSMS,       set: setNotifSMS },
-                  { label: "Email digest",      sub: "Weekly summary of activity",           value: notifEmail,     set: setNotifEmail },
+                  { label: "Order updates",    sub: "Shipping and delivery status alerts", value: notifOrders,    set: setNotifOrders },
+                  { label: "New arrivals",      sub: "Be first to know about new drops",    value: notifDrops,     set: setNotifDrops },
+                  { label: "Marketing emails",  sub: "Deals, offers, and style edits",      value: notifMarketing, set: setNotifMarketing },
+                  { label: "SMS notifications", sub: "Text alerts for orders and delivery", value: notifSMS,       set: setNotifSMS },
+                  { label: "Email digest",      sub: "Weekly summary of activity",          value: notifEmail,     set: setNotifEmail },
                 ].map(({ label, sub, value, set: setVal }, i, arr) => (
                   <div key={label} className={`flex items-center gap-4 px-6 py-4 ${i < arr.length - 1 ? "border-b border-border/50" : ""}`}>
                     <div className="flex flex-col gap-0.5 flex-1">
@@ -311,7 +335,6 @@ export default function ProfilePage() {
               </div>
             )}
 
-            {/* Security */}
             {settingsTab === "security" && (
               <div className="flex flex-col gap-4">
                 <div className="bg-white border border-blue-100 rounded-2xl p-6 flex flex-col gap-4">
@@ -335,7 +358,7 @@ export default function ProfilePage() {
                 <div className="bg-white border border-blue-100 rounded-2xl overflow-hidden">
                   {[
                     { icon: Smartphone, label: "Two-factor authentication", sub: "Add an extra layer of security", action: "Enable" },
-                    { icon: Lock,       label: "Active sessions",            sub: "Manage devices signed in",       action: "View" },
+                    { icon: Lock,       label: "Active sessions",            sub: "Manage devices signed in",      action: "View" },
                   ].map(({ icon: Icon, label, sub, action }) => (
                     <div key={label} className="flex items-center gap-4 px-6 py-4 border-b border-border/50 last:border-0">
                       <div className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center shrink-0">
@@ -352,7 +375,6 @@ export default function ProfilePage() {
               </div>
             )}
 
-            {/* Payment */}
             {settingsTab === "payment" && (
               <div className="flex flex-col gap-3">
                 <div className="bg-white border border-blue-100 rounded-2xl p-5 flex items-center gap-4">
@@ -374,7 +396,6 @@ export default function ProfilePage() {
               </div>
             )}
 
-            {/* Preferences */}
             {settingsTab === "preferences" && (
               <div className="bg-white border border-blue-100 rounded-2xl p-6 flex flex-col gap-5">
                 <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Shopping Preferences</p>
@@ -410,9 +431,9 @@ export default function ProfilePage() {
               </div>
             )}
 
-            {/* Sign out — always visible */}
+            {/* Sign out */}
             <div className="bg-white border border-blue-100 rounded-2xl overflow-hidden mt-2">
-              <button className="w-full flex items-center gap-4 px-6 py-4 hover:bg-rose-50 transition-colors group">
+              <button onClick={handleSignOut} className="w-full flex items-center gap-4 px-6 py-4 hover:bg-rose-50 transition-colors group">
                 <div className="w-9 h-9 rounded-full bg-rose-50 flex items-center justify-center shrink-0">
                   <LogOut size={15} strokeWidth={1.5} className="text-rose-500" />
                 </div>
