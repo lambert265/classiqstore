@@ -18,7 +18,7 @@ export async function sendEmail(payload: EmailPayload) {
       "content-type": "application/json",
     },
     body: JSON.stringify({
-      sender: payload.sender ?? { name: "CLASSIQ", email: "hello@CLASSIQ.com" },
+      sender: payload.sender ?? { name: "CLASSIQ", email: "hello@classiq.ng" },
       ...payload,
     }),
   });
@@ -42,7 +42,7 @@ export function welcomeEmail(name: string, email: string): EmailPayload {
           Your account is ready. Explore our new collection of refined womenswear — crafted with intention, made to last.
         </p>
 
-        <a href="https://classiq.ng" style="display:inline-block;padding:14px 32px;background:#0F172A;color:#ffffff;border-radius:999px;text-decoration:none;font-size:12px;letter-spacing:0.16em;text-transform:uppercase">
+        <a href="https://classiqstore.pxxl.click" style="display:inline-block;padding:14px 32px;background:#0F172A;color:#ffffff;border-radius:999px;text-decoration:none;font-size:12px;letter-spacing:0.16em;text-transform:uppercase">
           Shop the collection
         </a>
 
@@ -63,7 +63,7 @@ export function welcomeEmail(name: string, email: string): EmailPayload {
 
         <p style="margin-top:40px;font-size:11px;color:#CBD5E1">
           © CLASSIQ · Lagos, Nigeria ·
-          <a href="https://classiq.ng/privacy" style="color:#CBD5E1">Privacy Policy</a>
+          <a href="https://classiqstore.pxxl.click/privacy" style="color:#CBD5E1">Privacy Policy</a>
         </p>
       </div>`,
   };
@@ -92,7 +92,7 @@ export function orderStatusEmail(
         <p style="color:#475569;margin-bottom:24px">Hi ${customerName},</p>
         <h2 style="font-size:20px;margin-bottom:8px">${statusLabels[status] ?? status}</h2>
         <p style="color:#475569">Order <strong>${orderId}</strong> · Total <strong>${fmt(total)}</strong></p>
-        <a href="https://CLASSIQ.com/profile" style="display:inline-block;margin-top:24px;padding:12px 28px;background:#3B82F6;color:#fff;border-radius:999px;text-decoration:none;font-size:13px;letter-spacing:0.1em">
+        <a href="https://classiqstore.pxxl.click/profile" style="display:inline-block;margin-top:24px;padding:12px 28px;background:#3B82F6;color:#fff;border-radius:999px;text-decoration:none;font-size:13px;letter-spacing:0.1em">
           Track your order
         </a>
         <p style="margin-top:32px;font-size:12px;color:#94A3B8">© CLASSIQ. You're receiving this because you placed an order with us.</p>
@@ -120,7 +120,7 @@ export function quoteEmail(
           <p style="margin:0;font-size:28px;font-weight:700;color:#3B82F6">${fmt(quoteAmount)}</p>
           <p style="margin:4px 0 0;color:#475569;font-size:13px">Request #${requestId.slice(0, 8).toUpperCase()}</p>
         </div>
-        <a href="https://CLASSIQ.com/profile" style="display:inline-block;padding:12px 28px;background:#3B82F6;color:#fff;border-radius:999px;text-decoration:none;font-size:13px;letter-spacing:0.1em">
+        <a href="https://classiqstore.pxxl.click/profile" style="display:inline-block;padding:12px 28px;background:#3B82F6;color:#fff;border-radius:999px;text-decoration:none;font-size:13px;letter-spacing:0.1em">
           Accept quote
         </a>
         <p style="margin-top:32px;font-size:12px;color:#94A3B8">© CLASSIQ</p>

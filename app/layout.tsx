@@ -21,11 +21,13 @@ export const metadata: Metadata = {
   title: "CLASSIQ — Authored Womenswear",
   description:
     "CLASSIQ is a modern authored womenswear brand crafting refined pieces in soft neutrals — designed for the woman who dresses with intention.",
+  metadataBase: new URL("https://classiqstore.pxxl.click"),
   openGraph: {
     title: "CLASSIQ — Authored Womenswear",
     description:
       "Modern authored womenswear in soft neutrals. Refined pieces designed for the woman who dresses with intention.",
     type: "website",
+    url: "https://classiqstore.pxxl.click",
   },
   twitter: {
     card: "summary_large_image",
