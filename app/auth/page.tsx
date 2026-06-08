@@ -34,7 +34,7 @@ export default function AuthPage() {
     try {
       if (mode === "forgot") {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}/auth/reset`,
+          redirectTo: "https://classiqstore.pxxl.click/auth/reset",
         });
         if (error) throw error;
         setSuccess("Check your email for the password reset link.");
@@ -63,7 +63,7 @@ export default function AuthPage() {
     reset();
     await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
+      options: { redirectTo: "https://classiqstore.pxxl.click/auth/callback" },
     });
   }
 
