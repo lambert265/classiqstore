@@ -15,18 +15,12 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
-type Order = { id: string; date: string; status: string; items: number; total: number; img: string };
+type Order = { id: string; date: string; status: string; items: number; total: number };
 type WishlistItem = { id: number; name: string; price: string; img: string };
 type Address = { id: number; label: string; address: string; city: string; zip: string; isDefault: boolean };
 
 const fmt = (n: number) => `₦${n.toLocaleString("en-NG")}`;
 
-// Placeholder data — replace with real DB queries when orders/wishlist tables exist
-const placeholderOrders: Order[] = [
-  { id: "#NV-00412", date: "12 Jun 2026", status: "Delivered",  items: 2, total: 115500, img: "/product-1.jpg" },
-  { id: "#NV-00389", date: "28 May 2026", status: "In Transit", items: 1, total: 61500,  img: "/product-2.jpg" },
-  { id: "#NV-00301", date: "3 Apr 2026",  status: "Delivered",  items: 3, total: 187000, img: "/product-3.jpg" },
-];
 const placeholderWishlist: WishlistItem[] = [
   { id: 1, name: "Silk Wrap Dress",   price: "₦61,500", img: "/product-2.jpg" },
   { id: 2, name: "Ankle Strap Heels", price: "₦58,500", img: "/product-4.jpg" },
@@ -38,9 +32,13 @@ const placeholderAddresses: Address[] = [
 ];
 
 const statusColor: Record<string, string> = {
-  Delivered:    "bg-emerald-100 text-emerald-700",
-  "In Transit": "bg-amber-100 text-amber-700",
-  Processing:   "bg-blue-100 text-blue-700",
+  Delivered:            "bg-emerald-100 text-emerald-700",
+  "In Transit":         "bg-amber-100 text-amber-700",
+  Shipped:              "bg-amber-100 text-amber-700",
+  Processing:           "bg-blue-100 text-blue-700",
+  Confirmed:            "bg-blue-100 text-blue-700",
+  "Pending Confirmation": "bg-muted text-muted-foreground",
+  Cancelled:            "bg-rose-100 text-rose-700",
 };
 
 const tabs = [
@@ -64,7 +62,7 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
 export default function ProfilePage() {
   const router = useRouter();
   const [authUser, setAuthUser] = useState<{ name: string; email: string; initials: string; joined: string } | null>(null);
-  const orders    = placeholderOrders;
+  const [orders, setOrders] = useState<Order[]>([]);
   const wishlist  = placeholderWishlist;
   const addresses = placeholderAddresses;
 
@@ -82,7 +80,8 @@ export default function ProfilePage() {
   const [currency,       setCurrency]       = useState("NGN");
 
   useEffect(() => {
-    createClient().auth.getUser().then(({ data }) => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
       if (!data.user) { router.push("/auth"); return; }
       const fullName: string = data.user.user_metadata?.full_name ?? data.user.email ?? "User";
       const parts = fullName.trim().split(" ");
@@ -91,6 +90,22 @@ export default function ProfilePage() {
         : fullName.slice(0, 2).toUpperCase();
       const joined = new Date(data.user.created_at).toLocaleDateString("en-GB", { month: "long", year: "numeric" });
       setAuthUser({ name: fullName, email: data.user.email ?? "", initials, joined });
+
+      supabase
+        .from("orders")
+        .select("id, status, total_amount, items, created_at")
+        .eq("user_id", data.user.id)
+        .order("created_at", { ascending: false })
+        .then(({ data: rows }) => {
+          if (!rows) return;
+          setOrders(rows.map((o) => ({
+            id: `#CQ-${o.id.slice(0, 5).toUpperCase()}`,
+            date: new Date(o.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }),
+            status: o.status.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase()),
+            items: Array.isArray(o.items) ? o.items.length : 0,
+            total: o.total_amount,
+          })));
+        });
     });
   }, [router]);
 
@@ -193,25 +208,32 @@ export default function ProfilePage() {
         {/* ── ORDERS ── */}
         {activeTab === "orders" && (
           <div className="flex flex-col gap-3">
-            {orders.map((o) => (
-              <div key={o.id} className="bg-white border border-blue-100 rounded-2xl p-5 flex items-center gap-4">
-                <div className="relative w-14 h-16 rounded-xl overflow-hidden bg-muted shrink-0">
-                  <Image src={o.img} alt={o.id} fill className="object-cover" sizes="56px" />
-                </div>
-                <div className="flex flex-col gap-1 flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-medium text-foreground">{o.id}</span>
-                    <span className={`px-2.5 py-0.5 rounded-full text-[9px] uppercase tracking-[0.12em] font-medium ${statusColor[o.status]}`}>{o.status}</span>
-                  </div>
-                  <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">{o.date} · {o.items} item{o.items > 1 ? "s" : ""}</p>
-                  <p className="font-display text-base text-foreground">{fmt(o.total)}</p>
-                </div>
-                <ChevronRight size={16} strokeWidth={1.4} className="text-border shrink-0" />
+            {orders.length === 0 ? (
+              <div className="bg-white border border-blue-100 rounded-2xl p-10 flex flex-col items-center gap-3 text-center">
+                <Package size={32} strokeWidth={1.2} className="text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">No orders yet</p>
+                <Link href="/shop" className="px-6 py-2.5 rounded-full bg-primary text-white text-[11px] uppercase tracking-[0.16em] hover:bg-accent transition-colors">
+                  Start shopping
+                </Link>
               </div>
-            ))}
-            <button className="w-full py-4 rounded-full border border-border text-[11px] uppercase tracking-[0.18em] text-muted-foreground hover:border-primary hover:text-primary transition-colors duration-200 mt-2">
-              View all orders
-            </button>
+            ) : (
+              orders.map((o) => (
+                <div key={o.id} className="bg-white border border-blue-100 rounded-2xl p-5 flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                    <Package size={16} strokeWidth={1.5} className="text-primary" />
+                  </div>
+                  <div className="flex flex-col gap-1 flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-sm font-medium text-foreground">{o.id}</span>
+                      <span className={`px-2.5 py-0.5 rounded-full text-[9px] uppercase tracking-[0.12em] font-medium ${statusColor[o.status] ?? "bg-muted text-muted-foreground"}`}>{o.status}</span>
+                    </div>
+                    <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">{o.date} · {o.items} item{o.items !== 1 ? "s" : ""}</p>
+                    <p className="font-display text-base text-foreground">{fmt(o.total)}</p>
+                  </div>
+                  <ChevronRight size={16} strokeWidth={1.4} className="text-border shrink-0" />
+                </div>
+              ))
+            )}
           </div>
         )}
 
