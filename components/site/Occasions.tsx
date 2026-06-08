@@ -18,7 +18,7 @@ export default function Occasions() {
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {occasions.map(({ label, desc, img, color, slug }) => (
-            <Link key={label} href={`/products?occasion=${slug}`} className="relative rounded-2xl overflow-hidden aspect-[3/4] group cursor-pointer">
+            <Link key={label} href={`/shop?occasion=${slug}`} className="relative rounded-2xl overflow-hidden aspect-[3/4] group cursor-pointer">
               <Image src={img} alt={label} fill className="object-cover transition-transform duration-700 group-hover:scale-105" sizes="(max-width: 768px) 50vw, 25vw" />
               <div className={`absolute inset-0 bg-gradient-to-t ${color} to-transparent`} />
               <div className="absolute bottom-0 left-0 right-0 p-5 flex flex-col gap-1">

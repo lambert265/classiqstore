@@ -10,14 +10,14 @@ import { ShoppingBag, SlidersHorizontal, X } from "lucide-react";
 import { useCart } from "@/store/cart";
 
 const allProducts = [
-  { id: 1, name: "Silk Wrap Dress",        price: "₦61,500",  priceNum: 61500,  img: "/product-1.jpg", badge: "New",        meta: "women clothing",    occasions: ["event","weekend"] },
-  { id: 2, name: "Cream Leather Sneakers", price: "₦54,000",  priceNum: 54000,  img: "/product-2.jpg", badge: "Bestseller", meta: "women footwear",    occasions: ["casual","weekend"] },
-  { id: 3, name: "Wide Leg Linen Trousers",price: "₦39,500",  priceNum: 39500,  img: "/product-3.jpg", badge: "New",        meta: "women clothing",    occasions: ["casual","work","weekend"] },
-  { id: 4, name: "Strappy Heeled Mules",   price: "₦51,500",  priceNum: 51500,  img: "/product-4.jpg", badge: "New",        meta: "women footwear",    occasions: ["event","work"] },
-  { id: 5, name: "Knit Cardigan",          price: "₦47,500",  priceNum: 47500,  img: "/product-5.jpg", badge: "Bestseller", meta: "women knitwear",    occasions: ["casual","weekend","work"] },
-  { id: 6, name: "Gold Hoop Earrings",     price: "₦18,000",  priceNum: 18000,  img: "/product-1.jpg", badge: "New",        meta: "women accessories", occasions: ["event","casual","work"] },
-  { id: 7, name: "Tailored Blazer",        price: "₦78,000",  priceNum: 78000,  img: "/product-2.jpg", badge: "New",        meta: "women clothing",    occasions: ["work","event"] },
-  { id: 8, name: "Ankle Strap Heels",      price: "₦58,500",  priceNum: 58500,  img: "/product-3.jpg", badge: "Bestseller", meta: "women footwear",    occasions: ["event","work"] },
+  { id: 1, name: "Silk Wrap Dress",         price: "₦61,500", priceNum: 61500,  img: "/product-1.jpg", badge: "New",        meta: "women clothing",    occasions: ["event","weekend"] },
+  { id: 2, name: "Cream Leather Sneakers",  price: "₦54,000", priceNum: 54000,  img: "/product-2.jpg", badge: "Bestseller", meta: "women footwear",    occasions: ["casual","weekend"] },
+  { id: 3, name: "Wide Leg Linen Trousers", price: "₦39,500", priceNum: 39500,  img: "/product-3.jpg", badge: "New",        meta: "women clothing",    occasions: ["casual","work","weekend"] },
+  { id: 4, name: "Strappy Heeled Mules",    price: "₦51,500", priceNum: 51500,  img: "/product-4.jpg", badge: "New",        meta: "women footwear",    occasions: ["event","work"] },
+  { id: 5, name: "Knit Cardigan",           price: "₦47,500", priceNum: 47500,  img: "/product-5.jpg", badge: "Bestseller", meta: "women knitwear",    occasions: ["casual","weekend","work"] },
+  { id: 6, name: "Gold Hoop Earrings",      price: "₦18,000", priceNum: 18000,  img: "/product-1.jpg", badge: "New",        meta: "women accessories", occasions: ["event","casual","work"] },
+  { id: 7, name: "Tailored Blazer",         price: "₦78,000", priceNum: 78000,  img: "/product-2.jpg", badge: "New",        meta: "women clothing",    occasions: ["work","event"] },
+  { id: 8, name: "Ankle Strap Heels",       price: "₦58,500", priceNum: 58500,  img: "/product-3.jpg", badge: "Bestseller", meta: "women footwear",    occasions: ["event","work"] },
 ];
 
 const occasionLabels: Record<string, string> = {
@@ -26,7 +26,7 @@ const occasionLabels: Record<string, string> = {
 
 const categories = ["All", "women clothing", "women footwear", "women knitwear", "women accessories"];
 
-function ProductsContent() {
+function ShopContent() {
   const searchParams = useSearchParams();
   const occasion = searchParams.get("occasion") ?? "";
   const { addItem, setOpen } = useCart();
@@ -56,7 +56,6 @@ function ProductsContent() {
       <Header />
       <main className="max-w-7xl mx-auto px-6 pt-28 pb-20">
 
-        {/* Page heading */}
         <div className="mb-10">
           <p className="text-[10px] uppercase tracking-[0.28em] text-primary mb-2">
             {activeOccasion ? `Occasion — ${occasionLabels[activeOccasion] ?? activeOccasion}` : "All Products"}
@@ -68,12 +67,12 @@ function ProductsContent() {
             <button onClick={() => setShowFilters(v => !v)}
               className="flex items-center gap-2 px-4 py-2 rounded-full border border-border text-[11px] uppercase tracking-[0.14em] text-foreground hover:border-primary hover:text-primary transition-colors">
               <SlidersHorizontal size={13} strokeWidth={1.5} />
-              Filter
+              {showFilters ? "Hide" : "Filter"}
             </button>
           </div>
         </div>
 
-        {/* Active filters */}
+        {/* Active filter chips */}
         {(activeOccasion || activeCategory !== "All") && (
           <div className="flex flex-wrap gap-2 mb-6">
             {activeOccasion && (
@@ -123,10 +122,10 @@ function ProductsContent() {
           </div>
         )}
 
-        {/* Grid */}
+        {/* Product grid */}
         {filtered.length === 0 ? (
           <div className="h-60 flex flex-col items-center justify-center gap-3">
-            <p className="text-sm text-muted-foreground">No products found for this filter.</p>
+            <p className="text-sm text-muted-foreground">No products found.</p>
             <button onClick={() => { setActiveCategory("All"); setActiveOccasion(""); }}
               className="px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-[11px] uppercase tracking-[0.14em] hover:bg-accent transition-colors">
               Clear filters
@@ -166,10 +165,10 @@ function ProductsContent() {
   );
 }
 
-export default function ProductsPage() {
+export default function ShopPage() {
   return (
     <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" /></div>}>
-      <ProductsContent />
+      <ShopContent />
     </Suspense>
   );
 }
