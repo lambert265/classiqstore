@@ -41,28 +41,27 @@ export default function Header() {
 
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) {
-        const fullName: string = data.user.user_metadata?.full_name ?? data.user.email ?? "";
-        const parts = fullName.trim().split(" ");
-        const initials = parts.length >= 2
-          ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
-          : fullName.slice(0, 2).toUpperCase();
-        setAuthUser({ name: fullName, email: data.user.email ?? "", initials });
-      }
+
+    function setUserFromSession(user: { user_metadata?: { full_name?: string }; email?: string } | null) {
+      if (!user) { setAuthUser(null); return; }
+      const fullName: string = user.user_metadata?.full_name ?? user.email ?? "";
+      const parts = fullName.trim().split(" ");
+      const initials = parts.length >= 2
+        ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+        : fullName.slice(0, 2).toUpperCase();
+      setAuthUser({ name: fullName, email: user.email ?? "", initials });
+    }
+
+    // get current session immediately
+    supabase.auth.getSession().then(({ data }) => {
+      setUserFromSession(data.session?.user ?? null);
     });
+
+    // listen for sign-in/out including email confirmation redirect
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        const fullName: string = session.user.user_metadata?.full_name ?? session.user.email ?? "";
-        const parts = fullName.trim().split(" ");
-        const initials = parts.length >= 2
-          ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
-          : fullName.slice(0, 2).toUpperCase();
-        setAuthUser({ name: fullName, email: session.user.email ?? "", initials });
-      } else {
-        setAuthUser(null);
-      }
+      setUserFromSession(session?.user ?? null);
     });
+
     return () => subscription.unsubscribe();
   }, []);
 
