@@ -2,17 +2,18 @@
 
 export const dynamic = "force-dynamic";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Eye, EyeOff, Mail, Lock, User, AlertCircle, CheckCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 type Mode = "signin" | "signup" | "forgot";
 
-export default function AuthPage() {
+function AuthForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClient();
 
   const [mode, setMode] = useState<Mode>("signin");
@@ -23,6 +24,15 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (searchParams.get("error") === "confirmation_failed") {
+      setError("Confirmation link is invalid or expired. Please sign up again.");
+    }
+    if (searchParams.get("error") === "oauth_failed") {
+      setError("Google sign-in failed. Please try again.");
+    }
+  }, [searchParams]);
 
   function reset() { setError(null); setSuccess(null); }
 
@@ -39,16 +49,20 @@ export default function AuthPage() {
         if (error) throw error;
         setSuccess("Check your email for the password reset link.");
       } else if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
+        const { error, data } = await supabase.auth.signUp({
           email,
           password,
           options: { data: { full_name: name } },
         });
         if (error) throw error;
+        // If user already exists, Supabase returns a fake success with no session
+        if (data.user && !data.session && data.user.identities?.length === 0) {
+          throw new Error("An account with this email already exists. Please sign in instead.");
+        }
         setSuccess("Account created! Check your email to confirm before signing in.");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+        if (error) throw new Error("Incorrect email or password. If you just confirmed your email, please try again.");
         router.push("/");
         router.refresh();
       }
@@ -61,10 +75,12 @@ export default function AuthPage() {
 
   async function handleGoogle() {
     reset();
-    await supabase.auth.signInWithOAuth({
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: "https://classiqstore.pxxl.click/auth/callback" },
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
     });
+    if (error) { setError(error.message); setLoading(false); }
   }
 
   const form = (
@@ -280,5 +296,13 @@ export default function AuthPage() {
         </div>
       </div>
     </>
+  );
+}
+
+export default function AuthPage() {
+  return (
+    <Suspense>
+      <AuthForm />
+    </Suspense>
   );
 }

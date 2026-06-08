@@ -13,13 +13,24 @@ export async function GET(request: NextRequest) {
   const supabase = await createClient();
 
   if (token_hash && type) {
-    await supabase.auth.verifyOtp({ token_hash, type: type as "email" | "signup" | "recovery" | "email_change" });
-    return NextResponse.redirect(`${SITE_URL}/auth?confirmed=1`);
+    const { error } = await supabase.auth.verifyOtp({
+      token_hash,
+      type: type as "email" | "signup" | "recovery" | "email_change",
+    });
+    if (error) {
+      return NextResponse.redirect(`${SITE_URL}/auth?error=confirmation_failed`);
+    }
+    // Confirmed — redirect straight to home, already signed in
+    return NextResponse.redirect(`${SITE_URL}/`);
   }
 
   if (code) {
-    await supabase.auth.exchangeCodeForSession(code);
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    if (error) {
+      return NextResponse.redirect(`${SITE_URL}/auth?error=oauth_failed`);
+    }
+    return NextResponse.redirect(`${SITE_URL}${next}`);
   }
 
-  return NextResponse.redirect(`${SITE_URL}${next}`);
+  return NextResponse.redirect(`${SITE_URL}/auth`);
 }
