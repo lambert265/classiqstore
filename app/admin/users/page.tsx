@@ -8,6 +8,9 @@ interface UserRow {
   id: string;
   full_name: string | null;
   email: string | null;
+  phone: string | null;
+  size_preference: string | null;
+  currency: string | null;
   created_at: string;
   order_count: number;
   lifetime_value: number;
@@ -23,12 +26,12 @@ export default function UsersPage() {
     (async () => {
       const sb = createClient();
       const [{ data: profiles }, { data: orders }] = await Promise.all([
-        sb.from("profiles").select("id,full_name,email,created_at").eq("is_admin", false).order("created_at", { ascending: false }),
+        sb.from("profiles").select("id,full_name,email,phone,size_preference,currency,created_at").eq("is_admin", false).order("created_at", { ascending: false }),
         sb.from("orders").select("user_id,total_amount"),
       ]);
       const rows: UserRow[] = (profiles ?? []).map((p) => {
         const userOrders = (orders ?? []).filter((o: { user_id: string }) => o.user_id === p.id);
-        return { ...p, order_count: userOrders.length, lifetime_value: userOrders.reduce((s: number, o: { total_amount: number }) => s + o.total_amount, 0) };
+        return { ...p, phone: p.phone ?? null, size_preference: p.size_preference ?? null, currency: p.currency ?? null, order_count: userOrders.length, lifetime_value: userOrders.reduce((s: number, o: { total_amount: number }) => s + o.total_amount, 0) };
       });
       setUsers(rows);
       setLoading(false);
@@ -79,7 +82,7 @@ export default function UsersPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-white/6">
-                  {["Name", "Email", "Orders", "Lifetime Value", "Joined", ""].map((h) => (
+                  {["Name", "Email", "Phone", "Size", "Orders", "Lifetime Value", "Joined", ""].map((h) => (
                     <th key={h} className="text-left px-5 py-3 text-[9px] tracking-[0.2em] uppercase text-white/25 font-normal font-body">{h}</th>
                   ))}
                 </tr>
@@ -89,6 +92,8 @@ export default function UsersPage() {
                   <tr key={u.id} className="border-b border-white/4 last:border-0 hover:bg-white/[0.03] transition-colors">
                     <td className="px-5 py-3 text-white/70 font-body font-medium">{u.full_name ?? "—"}</td>
                     <td className="px-5 py-3 text-white/40 font-body">{u.email ?? "—"}</td>
+                    <td className="px-5 py-3 text-white/40 font-body">{u.phone ?? "—"}</td>
+                    <td className="px-5 py-3 text-white/40 font-body">{u.size_preference ?? "—"}</td>
                     <td className="px-5 py-3 text-white/50 font-body">{u.order_count}</td>
                     <td className="px-5 py-3 text-[#C9A84C] font-semibold font-body">{fmt(u.lifetime_value)}</td>
                     <td className="px-5 py-3 text-white/30 text-xs font-body">{new Date(u.created_at).toLocaleDateString("en-NG")}</td>
