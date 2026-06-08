@@ -1,9 +1,9 @@
 import Groq from "groq-sdk";
 import { createServiceClient } from "@/lib/supabase/server";
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+export const dynamic = "force-dynamic";
 
-export const revalidate = 3600;
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 export async function GET() {
   try {
